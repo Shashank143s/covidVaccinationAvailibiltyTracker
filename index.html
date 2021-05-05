@@ -1,0 +1,134 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <script>
+            let timer;
+            async function fetchVaccinationCenterDetails(pincode) {
+                const date = currentDate();
+                const response = await fetch(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=${pincode}&date=${date}`);
+                const centers = await response.json();
+                return checkVaccinationCentersWithAvailability(centers);
+            }
+
+            function checkVaccinationCentersWithAvailability({ centers }) {
+                let availableCenters = [];
+                centers.forEach((center) => {
+                    center.sessions.forEach((session) => {
+                        if(session.available_capacity > 0) {
+                            availableCenters.push({
+                                name: center.name,
+                                age_limit: session.min_age_limit,
+                                address: center.address,
+                                date: session.date,
+                                vaccine: session.vaccine,
+                                fees: center.fee_type,
+                                available: session.available_capacity,
+                                total_slots: session.slots.length,
+                            });
+                        }
+                    });
+                });
+                return availableCenters;
+            }
+
+            function currentDate() {
+                var today = new Date();
+                var dd = today.getDate();
+                var mm = today.getMonth() + 1;
+                var yyyy = today.getFullYear();
+                if (dd < 10) {
+                    dd = '0' + dd;
+                }
+                if (mm < 10) {
+                    mm = '0' + mm;
+                }
+                return dd + '-' + mm + '-' + yyyy;
+            }
+
+            function repaintTable(node) {
+                while (node.firstChild) {
+                    node.removeChild(node.firstChild);
+                }
+            }
+
+            function addRows(rowData) {
+                var newRow = document.createElement("tr");
+                var accessors = Object.keys(rowData);
+                for (let i = 0; i < 8; i++) {
+                    var newCell = document.createElement("td");
+                    newCell.innerHTML = rowData[accessors[i]];
+                    newRow.append(newCell);
+                }
+                document.getElementById("rows").appendChild(newRow);
+            }
+
+            function start() {
+                const pincode = document.getElementById('pincode').value;
+                const refreshInterval = document.getElementById('interval').value;
+                timer = setInterval(async function() {
+                    const results = await fetchVaccinationCenterDetails(pincode);
+                    if(results.length) {
+                        window.navigator.vibrate([2000,400,2000,400,2000,400,2000]);
+                        const repaintNode = document.getElementById("rows");
+                        repaintTable(repaintNode);
+                        results.forEach((result) => {
+                            addRows(result);
+                        });
+                    }
+                    const refreshTime = document.getElementById("lastRefresh");
+                    const removeOldNode = refreshTime.removeChild(refreshTime.firstChild);
+                    var newCell = document.createElement("p");
+                    const refVal = refreshTime.appendChild(newCell);
+                    const refreshStamp = new Date();
+                    refVal.innerHTML =  `Last refresh time: ${refreshStamp.toString().split(' ')[4]}`;
+
+                },refreshInterval);
+            }
+
+            function stop() {
+                clearInterval(timer);
+            }
+        </script>
+    </head>
+    <body>
+        <div class="form-group">
+            <label for="pincode">Pincode</label>
+            <input type="text" class="form-control" id="pincode" aria-describedby="pincodeHelp" placeholder="Enter pincode">
+            <small id="pincodeHelp" class="form-text text-muted">Please enter a pincode.</small>
+        </div>
+        <div class="form-group">
+            <label for="interval">Refresh Interval</label>
+            <input type="text" class="form-control" id="interval" placeholder="Time in ms">
+            <small id="intervalHelp" class="form-text text-muted">Minimum refresh interval is 10 sec</small>
+        </div>
+        <button class="btn btn-danger" onclick="stop()">Stop</button>
+        <button class="btn btn-primary" onclick="start()">Start</button>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <div id="lastRefresh"><p></p></div>
+        <div class="table-responsive">          
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Age Limit</th>
+                  <th>Address</th>
+                  <th>Date</th>
+                  <th>Vaccine</th>
+                  <th>Fees</th>
+                  <th>Available</th>
+                  <th>Total Slots</th>
+                </tr>
+              </thead>
+              <tbody id="rows">
+              </tbody>
+            </table>
+            </div>
+    </body>
+</html>
