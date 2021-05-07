@@ -34,6 +34,20 @@
                 return availableCenters;
             }
 
+            async function getOTP() {
+                const mobile = document.getElementById('phone').value;
+                await fetch('https://cdn-api.co-vin.in/api/v2/auth/public/generateOTP', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mobile,
+                    }),
+                });
+                document.getElementById("success_otp").style.display = "inline-block";
+            };
+
             function currentDate() {
                 var today = new Date();
                 var dd = today.getDate();
@@ -48,13 +62,14 @@
                 return dd + '-' + mm + '-' + yyyy;
             }
 
-            function repaintTable(node) {
+            function repaintTable() {
+                const node = document.getElementById("rows");
                 while (node.firstChild) {
                     node.removeChild(node.firstChild);
                 }
             }
 
-            function addRows(rowData) {
+            function addRow(rowData) {
                 var newRow = document.createElement("tr");
                 var accessors = Object.keys(rowData);
                 for (let i = 0; i < 8; i++) {
@@ -65,70 +80,99 @@
                 document.getElementById("rows").appendChild(newRow);
             }
 
+            function addMultipleRows(rowsData) {
+                rowsData.forEach((result) => {
+                    addRow(result);
+                });
+            }
+
+            function vibratePhone() {
+                window.navigator.vibrate([2000,400,2000]);
+            }
+
+            function addNoDataRow(pincode) {
+                var newRow = document.createElement("tr");
+                newRow.innerHTML = `No vaccine available for PINCODE: ${pincode}`;
+                document.getElementById("rows").appendChild(newRow);
+            }
+
             function start() {
+                stop();
                 const pincode = document.getElementById('pincode').value;
                 const refreshInterval = document.getElementById('interval').value;
                 timer = setInterval(async function() {
                     const results = await fetchVaccinationCenterDetails(pincode);
-                    if(results.length) {
-                        window.navigator.vibrate([2000,400,2000,400,2000,400,2000]);
-                        const repaintNode = document.getElementById("rows");
-                        repaintTable(repaintNode);
-                        results.forEach((result) => {
-                            addRows(result);
-                        });
+                    repaintTable();
+                    if(results.length > 0) {
+                        vibratePhone();
+                        addMultipleRows(results);
+                    }
+                    else {
+                        addNoDataRow(pincode);
                     }
                     const refreshTime = document.getElementById("lastRefresh");
                     const removeOldNode = refreshTime.removeChild(refreshTime.firstChild);
-                    var newCell = document.createElement("p");
+                    var newCell = document.createElement("em");
                     const refVal = refreshTime.appendChild(newCell);
                     const refreshStamp = new Date();
                     refVal.innerHTML =  `Last refresh time: ${refreshStamp.toString().split(' ')[4]}`;
-
-                },refreshInterval);
+                },refreshInterval*1000);
             }
 
             function stop() {
+                window.navigator.vibrate(0);
                 clearInterval(timer);
             }
         </script>
     </head>
     <body>
-        <div class="form-group">
-            <label for="pincode">Pincode</label>
-            <input type="text" class="form-control" id="pincode" aria-describedby="pincodeHelp" placeholder="Enter pincode">
-            <small id="pincodeHelp" class="form-text text-muted">Please enter a pincode.</small>
-        </div>
-        <div class="form-group">
-            <label for="interval">Refresh Interval</label>
-            <input type="text" class="form-control" id="interval" placeholder="Time in ms">
-            <small id="intervalHelp" class="form-text text-muted">Minimum refresh interval is 10 sec</small>
-        </div>
-        <button class="btn btn-danger" onclick="stop()">Stop</button>
-        <button class="btn btn-primary" onclick="start()">Start</button>
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
-        <div id="lastRefresh"><p></p></div>
-        <div class="table-responsive">          
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Age Limit</th>
-                  <th>Address</th>
-                  <th>Date</th>
-                  <th>Vaccine</th>
-                  <th>Fees</th>
-                  <th>Available</th>
-                  <th>Total Slots</th>
-                </tr>
-              </thead>
-              <tbody id="rows">
-              </tbody>
-            </table>
+        <div class="container">
+            <div class="row" style="padding:10px;">
+                <div class="col col-sm-offset-4 col-sm-4" style="padding:10px; border:solid 1px lightgrey; border-radius:5px;">
+                    <div class="form-group">
+                        <label for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode" aria-describedby="pincodeHelp" placeholder="Enter pincode">
+                        <small id="pincodeHelp" class="form-text text-muted">Please enter a pincode.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="interval">Refresh Interval</label>
+                        <input type="text" class="form-control" id="interval" placeholder="Time in sec">
+                        <small id="intervalHelp" class="form-text text-muted">Keep minimum refresh interval to 5 sec</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="start()">Start Search</button>
+                    <div class="form-group" style="margin-top:20px;">
+                        <label for="phone">Mobile Number</label>
+                        <input type="tel" class="form-control" id="phone" aria-describedby="phoneHelp" placeholder="Enter mobile number">
+                        <small id="phoneHelp" class="form-text text-muted">Please enter mobile number.</small>
+                    </div>
+                    <button id="otp" class="btn btn-warning" onclick="getOTP()">
+                        Send OTP
+                    </button>
+                    <span id="success_otp" class="badge badge-pill badge-success" style="background-color:#28a745; display:none;">OTP sent</span>
+                    <span id="success_error" class="badge badge-pill badge-success" style="background-color:#dc3545; display:none;">error</span>
+                </div>
             </div>
+            <span class="badge badge-info" id="lastRefresh"><em></em></span>
+            <div class="row" style="padding:10px;">
+                <div class="table table-responsive table-hover table-bordered">          
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Age Limit</th>
+                          <th>Address</th>
+                          <th>Date</th>
+                          <th>Vaccine</th>
+                          <th>Fees</th>
+                          <th>Available</th>
+                          <th>Total Slots</th>
+                        </tr>
+                      </thead>
+                      <tbody id="rows">
+                      </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </body>
 </html>
