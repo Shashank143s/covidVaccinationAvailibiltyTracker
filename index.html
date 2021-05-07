@@ -133,6 +133,7 @@
             function stop() {
                 window.navigator.vibrate(0);
                 clearInterval(timer);
+                pauseAudio();
             }
         </script>
     </head>
@@ -150,6 +151,7 @@
                         <input type="text" class="form-control" id="interval" placeholder="Time in sec">
                         <small id="intervalHelp" class="form-text text-muted">Keep minimum refresh interval to 5 sec</small>
                     </div>
+                    <button class="btn btn-danger" onclick="stop()">Stop Search</button>
                     <button class="btn btn-primary" onclick="start()">Start Search</button>
                     <div class="form-group" style="margin-top:20px;">
                         <label for="phone">Mobile Number</label>
