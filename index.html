@@ -117,6 +117,21 @@
                 document.getElementById("rows").appendChild(newRow);
             }
 
+            function refreshTimeStamp() {
+                const refreshTime = document.getElementById("lastRefresh");
+                const removeOldNode = refreshTime.removeChild(refreshTime.firstChild);
+                var newCell = document.createElement("em");
+                const refVal = refreshTime.appendChild(newCell);
+                const refreshStamp = new Date();
+                refVal.innerHTML =  `Last refresh time: ${refreshStamp.toString().split(' ')[4]}`;
+            }
+
+            function stop() {
+                window.navigator.vibrate(0);
+                clearInterval(timer);
+                pauseAudio();
+            }
+
             function start() {
                 stop();
                 const pincode = document.getElementById('pincode').value;
@@ -138,19 +153,8 @@
                     else {
                         addNoDataRow(pincode,ageGroup);
                     }
-                    const refreshTime = document.getElementById("lastRefresh");
-                    const removeOldNode = refreshTime.removeChild(refreshTime.firstChild);
-                    var newCell = document.createElement("em");
-                    const refVal = refreshTime.appendChild(newCell);
-                    const refreshStamp = new Date();
-                    refVal.innerHTML =  `Last refresh time: ${refreshStamp.toString().split(' ')[4]}`;
+                    refreshTimeStamp();
                 },refreshInterval*1000);
-            }
-
-            function stop() {
-                window.navigator.vibrate(0);
-                clearInterval(timer);
-                pauseAudio();
             }
         </script>
     </head>
