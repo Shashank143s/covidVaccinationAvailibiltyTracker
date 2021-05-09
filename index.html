@@ -37,7 +37,8 @@
 
             async function getOTP() {
                 const mobile = document.getElementById('phone').value;
-                await fetch('https://cdn-api.co-vin.in/api/v2/auth/public/generateOTP', {
+                if(mobile.length === 10) {
+                    await fetch('https://cdn-api.co-vin.in/api/v2/auth/public/generateOTP', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -45,8 +46,17 @@
                     body: JSON.stringify({
                         mobile,
                     }),
+                }).then((result) => {
+                    if(result.status === 200) {
+                        document.getElementById("success_otp").style.display = "inline-block";
+                        document.getElementById("success_error").style.display = "none";
+                    }
+                    if(result.status === 400) {
+                        document.getElementById("success_otp").style.display = "none";
+                        document.getElementById("success_error").style.display = "inline-block";
+                    }
                 });
-                document.getElementById("success_otp").style.display = "inline-block";
+                }
             };
 
             function currentDate() {
@@ -145,6 +155,15 @@
     <body>
         <div class="container">
             <div class="row" style="padding:10px;">
+                <div class="jumbotron">
+                    <h1 class="display-4">Hello, from BuzzMyVaccine!</h1>
+                    <p class="lead">This is a simple application that takes your <code>pincode</code> and <code>age-group</code> and returns the available vaccination centers.</p>
+                    <hr class="my-4">
+                    <p>I had developed the application for my own use but as many faced a smiliar problem, I thought of sharing the app with others.</p>
+                    <p>What makes it separate is, it won't ask for your personal information and will start playing a soundtrack (from Star Wars) and vibrate your phone.</p>
+                    <p> After starting the search, the phone will start playing the sound even if the screen is turned off.</p>
+                    <p> If someone wants to contribute, your are more than welcomed.This is an open-source project and can be found <a href="https://github.com/Shashank143s/covidVaccinationAvailibiltyTracker">here</a>.</p>
+                  </div>
                 <div class="col col-sm-offset-4 col-sm-4" style="padding:10px; border:solid 1px lightgrey; border-radius:5px;">
                     <div class="form-group">
                         <label for="pincode">Pincode</label>
@@ -153,7 +172,7 @@
                     </div>
                     <div class="form-group">
                         <label for="interval">Refresh Interval</label>
-                        <input type="text" class="form-control" id="interval" aria-describedby="intervalHelp" placeholder="Time in sec">
+                        <input type="text" class="form-control" id="interval" aria-describedby="intervalHelp" placeholder="Time in sec" value="10">
                         <small id="intervalHelp" class="form-text text-muted">Keep minimum refresh interval to 10 sec</small>
                     </div>
                     <div class="form-group">
@@ -172,8 +191,8 @@
                     <button id="otp" class="btn btn-warning" onclick="getOTP()">
                         Send OTP
                     </button>
-                    <span id="success_otp" class="badge badge-pill badge-success" style="background-color:#28a745; display:none;">OTP sent</span>
-                    <span id="success_error" class="badge badge-pill badge-success" style="background-color:#dc3545; display:none;">error</span>
+                    <span id="success_otp" class="badge badge-pill badge-success" style="background-color:#28a745; display:none;">OTP sent(valid for 3 mins)</span>
+                    <span id="success_error" class="badge badge-pill badge-success" style="background-color:#dc3545; display:none;">OTP already sent</span>
                 </div>
             </div>
             <span class="badge badge-info" id="lastRefresh"><em></em></span>
