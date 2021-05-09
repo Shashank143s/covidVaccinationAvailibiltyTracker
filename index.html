@@ -100,7 +100,8 @@
             }
 
             function vibratePhone() {
-                window.navigator.vibrate([2000,400,2000]);
+                if(window.navigator.vibrate)
+                    window.navigator.vibrate([2000,400,2000]);
             }
 
             function playAudio() {
@@ -127,6 +128,7 @@
             }
 
             function stop() {
+                if(window.navigator.vibrate)
                 window.navigator.vibrate(0);
                 clearInterval(timer);
                 pauseAudio();
